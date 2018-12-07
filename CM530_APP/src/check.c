@@ -6,9 +6,20 @@
  */
 
 #include "check.h"
-
+#include "button.h"
 
 unsigned int Center[] = {18, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512};
+
+u16 _xRawMin = 2000;
+u16 _xRawMax = 1000;
+
+u16 _yRawMin = 2000;
+u16 _yRawMax = 1000;
+
+u16 _zRawMin = 2000;
+u16 _zRawMax = 1000;
+
+u16 _xRaw,_yRaw,_zRaw;
 
 
 //##############################################################################
@@ -36,7 +47,7 @@ void SensorOptions(void) {
 	PrintString("\n0) Right IR Sensor\n");
 	PrintString("\n1) Left IR Sensor\n");
 	PrintString("\n2) DMS Sensor\n");
-	PrintString("\n3) Gyro Sensor\n");
+	PrintString("\n3) AutoCalibrate ADXL335\n");
 	PrintString("\n4) Gyro Sensor: X\n");
 	PrintString("\n5) Gyro Sensor: Y\n");
 	PrintString("\n###########################\n");
@@ -53,7 +64,9 @@ void SensorOptions(void) {
 	}else if (sensor == '2'){
 		Printu32d(ReadAnalog(EPORT5A));
 	}else if (sensor == '3'){
-		GyroSensor();
+		//GyroSensor();
+		//AutoCalibrate_ADXL335();
+		Accel_AXIS_Options();
 	}else if (sensor == '4'){
 		Printu32d(ReadAnalog(EPORT3A));
 	}else if (sensor == '5'){
@@ -65,6 +78,33 @@ void SensorOptions(void) {
 
 
 
+}
+//##############################################################################
+void Accel_AXIS_Options(void) {
+	PrintString("\n###########################\n");
+	PrintString("\nPlease enter option 0-2 to run individual autocalibration again.\n");
+	PrintString("\n0) X axis\n");
+	PrintString("\n1) Y axis\n");
+	PrintString("\n2) Z axis\n");
+	PrintString("\n3) Take samples\n");
+	PrintString("\n###########################\n");
+	PrintString("\n###########################\n");
+	PrintString("\Axis ??");
+	PrintString("\n###########################\n");
+
+	u8 sensor = (u8) RxDByte_PC();
+
+	if (sensor == '0'){
+		AutoCalibrate_ADXL335(0);
+	}else if (sensor == '1'){
+		AutoCalibrate_ADXL335(1);
+	}else if (sensor == '2'){
+		AutoCalibrate_ADXL335(2);
+	}else if (sensor == '3'){
+			TakeSample_ADXL335();
+	}else{
+		PrintString("Opcion invalida\n");
+	}
 }
 //##############################################################################
 void BuzzedImperialMarch() {
@@ -650,7 +690,7 @@ u16 readIRsensor(){
 void adcPinSetup(void){
 
 
-	GPIO_ResetBits(PORT_SIG_MOT3P,PIN_SIG_MOT3P);
+/**	GPIO_ResetBits(PORT_SIG_MOT3P,PIN_SIG_MOT3P);
 	GPIO_ResetBits(PORT_SIG_MOT3M,PIN_SIG_MOT3M);
 	GPIO_ResetBits(PORT_SIG_MOT4P,PIN_SIG_MOT4P);
 	GPIO_ResetBits(PORT_SIG_MOT4M,PIN_SIG_MOT4M);
@@ -668,7 +708,9 @@ void adcPinSetup(void){
 	SetEPort(0, 0);
 	SetEPort(1, 0);
 	SetEPort(2, 0);
-	SetEPort(3, 0);
+	SetEPort(3, 0);*/
+
+	GPIO_SetBits(PORT_SIG_MOT2P,PIN_SIG_MOT2M);
 
 }
 //##########################################################################
@@ -760,6 +802,84 @@ u16 GyroSensorX(void){
 	}
 
 	return temp/10;
+
+}
+//###########################################################################
+void AutoCalibrate_ADXL335(int axi){
+
+	PrintString(" AutoCalibrate_ADXL335 \n");
+
+
+	while (!ReadButton(START)){
+		if (axi ==  0 ){
+			_xRaw  =  ReadAnalog(EPORT3A);
+			if (_xRaw < _xRawMin)
+			{
+			   _xRawMin = _xRaw;
+			}
+			if (_xRaw > _xRawMax)
+			{
+			    _xRawMax = _xRaw;
+			 }
+		}
+		if ( axi ==   1){
+			_yRaw   = ReadAnalog(EPORT4A);
+			 if (_yRaw < _yRawMin)
+			 {
+			    _yRawMin = _yRaw;
+			 }
+			 if (_yRaw > _yRawMax)
+			  {
+				 _yRawMax = _yRaw;
+			  }
+		}
+		if ( axi ==  2 ){
+			_zRaw  = ReadAnalog(EPORT2A);
+			 if (_zRaw < _zRawMin)
+			 {
+			    _zRawMin = _zRaw;
+			 }
+			 if (_zRaw > _zRawMax)
+			 {
+			   _zRawMax = _zRaw;
+			 }
+		}
+	}
+	if (axi == 0 ){
+		PrintString("Raw Ranges: X: \n");
+			TxD_Dec_U16(_xRawMin);
+			PrintString(" - ");
+			TxD_Dec_U16(_xRawMax);
+			PrintString("\n");
+	}
+	if (axi == 1){
+		PrintString("Raw Ranges: Y: \n");
+		TxD_Dec_U16(_yRawMin);
+		PrintString(" - ");
+		TxD_Dec_U16(_yRawMax);
+		PrintString("\n");
+	}
+	if ( axi == 2){
+		PrintString("Raw Ranges: Z: \n");
+		TxD_Dec_U16(_zRawMin);
+		PrintString(" - ");
+		TxD_Dec_U16(_zRawMax);
+		PrintString("\n");
+	}
+}
+//###########################################################################
+void TakeSample_ADXL335(){
+
+	while (!ReadButton(START)){
+		TxD_Dec_S16(ReadAnalog(EPORT3A));
+		PrintString(" - ");
+		TxD_Dec_S16(ReadAnalog(EPORT4A));
+		PrintString(" - ");
+		TxD_Dec_S16(ReadAnalog(EPORT2A));
+		PrintString("\n");
+
+		mDelay(50);
+	}
 
 }
 //###########################################################################

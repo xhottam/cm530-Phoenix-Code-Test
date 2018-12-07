@@ -22,6 +22,7 @@
 
 void MenuOptions(void);
 void SensorOptions(void);
+void Accel_AXIS_Options(void);
 void BuzzedImperialMarch(void);
 void servoScanningTest(void);
 void checkLeds(void);
@@ -38,7 +39,8 @@ u16 GyroSensorX(void);
 u16 GyroSensorY(void);
 unsigned int * ChoosePose(void);
 u16 readIRsensor(void);
-
+void  AutoCalibrate_ADXL335(int axi);
+void TakeSample_ADXL335(void);
 
 
 #endif /* CM530_APP_INC_CHECK_H_ */

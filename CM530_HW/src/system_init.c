@@ -349,10 +349,10 @@ void ADC_Configuration(void) {
 	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	ADC_InitStructure.ADC_NbrOfChannel = 1;
+	ADC_InitStructure.ADC_NbrOfChannel = 2;
 
 	ADC_Init(ADC1, &ADC_InitStructure);
-
+	ADC_InitStructure.ADC_NbrOfChannel = 1;
 	ADC_Init(ADC2, &ADC_InitStructure);
 
 	 //ADC1 regular channels configuration
